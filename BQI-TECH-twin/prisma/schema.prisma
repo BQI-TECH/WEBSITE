@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id          String       @id @default(cuid())
+  clerkId     String       @unique @map("clerk_id")
+  email       String       @unique
+  name        String
+  phoneNumber String?
+  applications Application[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([clerkId])
+}
+
+model Application {
+  id                 String   @id @default(cuid())
+  name               String
+  email              String
+  phoneNumber        String?
+  location           String
+  position           String
+  resumeUrl          String
+  hearAbout          String
+  otherSource        String?
+  experience         String
+  salary             String
+  status             String
+  appliedDate        DateTime @default(now())
+  lastUpdated        DateTime @updatedAt
+  userId             String?
+  user               User?     @relation(fields: [userId], references: [id])
+  shortlistedDate    DateTime?
+  assessmentDate     DateTime?
+  assessmentScore    Int?
+  interviewDate      DateTime?
+  interviewer        String?
+  hireDate          DateTime?
+  startDate         DateTime?
+  disqualifiedDate   DateTime?
+  disqualifiedReason String?
+}
+
+model JobPosting {
+  id           String   @id @default(cuid())
+  title        String
+  department   String?
+  location     String
+  description  String
+  requirements String?
+  postedDate   DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  title     String
+  message   String
+  type      String   // 'info' | 'success' | 'warning' | 'error'
+  date      DateTime @default(now())
+  isRead    Boolean  @default(false)
+  userId    String?  // Optional: link to user if needed
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

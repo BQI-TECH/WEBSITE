@@ -1,0 +1,104 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("POSTGRES_PRISMA_URL")
+  directUrl = env("POSTGRES_URL_NON_POOLING") // Used for migrations
+}
+
+model Idea {
+  id          Int      @id @default(autoincrement())
+  title       String
+  description String
+  category    String
+  department  String
+  author_id   String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+  likes       Int      @default(0)
+  status      String   @default("pending") // pending, approved, implemented
+  comments_count Int   @default(0)
+  notes       Note[]
+  
+  // Relations
+  likes_by    IdeaLike[]
+  comments    Comment[]
+  notifications Notification[]
+
+  @@index([department])
+  @@index([category])
+  @@index([author_id])
+}
+
+model IdeaLike {
+  id        Int      @id @default(autoincrement())
+  idea_id   Int
+  user_id   String
+  created_at DateTime @default(now())
+  
+  // Relations
+  idea      Idea     @relation(fields: [idea_id], references: [id])
+
+  @@unique([idea_id, user_id])
+  @@index([user_id])
+}
+
+model Comment {
+  id         Int       @id @default(autoincrement())
+  idea_id    Int
+  user_id    String
+  content    String
+  created_at DateTime  @default(now())
+  updated_at DateTime  @updatedAt
+  parent_id  Int?
+  
+  // Relations
+  idea       Idea      @relation(fields: [idea_id], references: [id])
+  parent     Comment?  @relation("CommentReplies", fields: [parent_id], references: [id])
+  replies    Comment[] @relation("CommentReplies")
+
+  @@index([user_id])
+  @@index([parent_id])
+}
+
+model Department {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique
+  description String?
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+}
+
+model Notification {
+  id         Int      @id @default(autoincrement())
+  user_id    String
+  type       String   // 'like', 'comment', 'idea'
+  message    String
+  idea_id    Int?
+  read       Boolean  @default(false)
+  created_at DateTime @default(now())
+  
+  idea       Idea?    @relation(fields: [idea_id], references: [id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([idea_id])
+}
+
+model Note {
+  id         String   @id @default(cuid())
+  idea_id    Int
+  content    String
+  color      String
+  order      Int
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+  
+  idea       Idea     @relation(fields: [idea_id], references: [id], onDelete: Cascade)
+
+  @@index([idea_id])
+} 
